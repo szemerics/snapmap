@@ -21,50 +21,84 @@ If you have already cloned it without submodules, run:
 git submodule update --init --recursive
 ```
 
-## .Env files
+## Environment setup
 
-Copy the example env file and fill in real values (JWT and Cloudinary)
+This project supports 2 environments:
 
-Backend:
+- `dev`
+- `prod`
+
+### Dev setup
 
 ```bash
-cp snapmap-backend/.env.example snapmap-backend/.env
+cp snapmap-backend/.env.dev.example snapmap-backend/.env.dev
+cp snapmap-frontend/.env.dev.example snapmap-frontend/.env.dev
 ```
 
-Edit `snapmap-backend/.env`. Compose overrides `MONGODB_URI` to use the local Mongo container, but you still need the other secrets.
+`dev` uses:
 
-Frontend (This can remain as it is):
+- local MongoDB container
+- local `./nsfw_model` folder
+- Cloudinary folder: `snapmap-dev`
+- backend dependencies: `requirements-dev.txt` (full set)
+
+### Prod setup
 
 ```bash
-cp snapmap-frontend/.env.example snapmap-frontend/.env
+cp snapmap-backend/.env.prod.example snapmap-backend/.env.prod
+cp snapmap-frontend/.env.prod.example snapmap-frontend/.env.prod
 ```
 
-## Run everything
+`prod` uses:
 
-From this folder (the same folder as `docker-compose.yml`):
+- MongoDB Atlas URI from `.env.prod`
+- NSFW checks via API (`NSFW_MODE=api`)
+- Cloudinary folder: `snapmap-prod`
+- backend dependencies: `requirements.txt` (minimal set)
+- frontend runtime image: built static files on Nginx (no dev tooling at runtime)
+
+### Where to get API tokens
+
+- NSFW API token: [Hugging Face](https://huggingface.co/settings/tokens)
+  (create a token with `Finegrained` scope, with `Make calls to Inference Providers` being checked)
+- Cloudinary API token: [Cloudinary](https://console.cloudinary.com/app/settings/api-keys)
+- MongoDB Atlas URI: [MongoDB Atlas](https://cloud.mongodb.com/)
+- JWT Secret Generator: [JWT Secret Generator](https://jwtsecretkeygenerator.com/)
+
+## Run with Docker Compose
+
+Dev:
 
 ```bash
-docker compose up --build
+docker compose -f docker-compose.dev.yml up --build
+```
+
+Prod:
+
+```bash
+docker compose -f docker-compose.prod.yml up --build
 ```
 
 Then open:
 
-| Service  | URL                   |
-| -------- | --------------------- |
-| Frontend | http://localhost:5173 |
-| API      | http://localhost:8000 |
-| MongoDB  | localhost:27017       |
+| Service  | URL                                                      |
+| -------- | -------------------------------------------------------- |
+| Frontend | [http://localhost:5173](http://localhost:5173)           |
+| API      | [http://localhost:8000/docs](http://localhost:8000/docs) |
+| MongoDB  | localhost:27017                                          |
+
+Prod frontend runs on `http://localhost:4173`.
 
 Stop containers:
 
 ```bash
-docker compose down
+docker compose -f docker-compose.dev.yml down
 ```
 
 To wipe the database volume and start clean:
 
 ```bash
-docker compose down -v
+docker compose -f docker-compose.dev.yml down -v
 ```
 
 ## Seed sample data
@@ -72,21 +106,22 @@ docker compose down -v
 Run the following script once to fill database with sample data.
 
 ```bash
-docker compose run --rm api python /app/src/app/utils/init/create_init_state.py
+docker compose -f docker-compose.dev.yml run --rm api python /app/src/app/utils/init/create_init_state.py
 ```
 
 Logins to sample users:
 
-| User Role | Email                     | Password         |
-| --------- | ------------------------- | ---------------- |
-| Admin     | adminuser@example.com     | adminuser123     |
-| Moderator | moderatoruser@example.com | moderatoruser123 |
-| Default   | testuser@example.com      | testuser123      |
+| User Role | Email                                                         | Password         |
+| --------- | ------------------------------------------------------------- | ---------------- |
+| Admin     | [adminuser@example.com](mailto:adminuser@example.com)         | adminuser123     |
+| Moderator | [moderatoruser@example.com](mailto:moderatoruser@example.com) | moderatoruser123 |
+| Default   | [testuser@example.com](mailto:testuser@example.com)           | testuser123      |
 
 Use this on a fresh database or after `docker compose down -v`.
 
 ## Repo layout
 
-- `docker-compose.yml` — Frontend, Backend (API), and Mongo
+- `docker-compose.dev.yml` — Frontend, Backend (API), and local Mongo
+- `docker-compose.prod.yml` — Frontend and Backend (Atlas Mongo via env)
 - `snapmap-backend/` — Python API (submodule)
 - `snapmap-frontend/` — React Web App (submodule)
