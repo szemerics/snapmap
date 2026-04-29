@@ -1,6 +1,8 @@
 [submodule "snapmap-frontend"]
 	path = snapmap-frontend
 	url = https://github.com/szemerics/snapmap-frontend
+	branch = main
 [submodule "snapmap-backend"]
 	path = snapmap-backend
 	url = https://github.com/szemerics/snapmap-backend
+	branch = main
