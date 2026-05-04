@@ -23,39 +23,15 @@ git submodule update --init --recursive
 
 ## Environment setup
 
-This project supports 2 environments:
-
-- `dev`
-- `prod`
-
-### Dev setup
-
 ```bash
-cp snapmap-backend/.env.dev.example snapmap-backend/.env.dev
-cp snapmap-frontend/.env.dev.example snapmap-frontend/.env.dev
+cp snapmap-backend/.env.example snapmap-backend/.env
+cp snapmap-frontend/.env.example snapmap-frontend/.env
 ```
 
-`dev` uses:
+Fill in the values.
 
-- local MongoDB container
-- local `./nsfw_model` folder
-- Cloudinary folder: `snapmap-dev`
-- backend dependencies: `requirements-dev.txt` (full set)
-
-### Prod setup
-
-```bash
-cp snapmap-backend/.env.prod.example snapmap-backend/.env.prod
-cp snapmap-frontend/.env.prod.example snapmap-frontend/.env.prod
-```
-
-`prod` uses:
-
-- MongoDB Atlas URI from `.env.prod`
-- NSFW checks via API (`NSFW_MODE=api`)
-- Cloudinary folder: `snapmap-prod`
-- backend dependencies: `requirements.txt` (minimal set)
-- frontend runtime image: built static files on Nginx (no dev tooling at runtime)
+- **Backend:** `snapmap-backend/.env`. Dev Compose forces Mongo to the `mongo` container (your file can still say `localhost` for running the API outside Docker)
+- **Frontend:** `snapmap-frontend/.env`. **`VITE_API_URL`** is the API address.
 
 ### Where to get API tokens
 
@@ -65,48 +41,44 @@ cp snapmap-frontend/.env.prod.example snapmap-frontend/.env.prod
 - MongoDB Atlas URI: [MongoDB Atlas](https://cloud.mongodb.com/)
 - JWT Secret Generator: [JWT Secret Generator](https://jwtsecretkeygenerator.com/)
 
-## Run with Docker Compose
+## Docker
 
-Dev:
+**Dev** (Vite + API + Mongo):
 
 ```bash
-docker compose -f docker-compose.dev.yml up --build
+docker compose up --build
 ```
 
-Prod:
+Open [http://localhost:5173](http://localhost:5173). API: [http://localhost:8000/docs](http://localhost:8000/docs).
+
+**Prod** (built frontend + API, no Mongo in Compose):
 
 ```bash
 docker compose -f docker-compose.prod.yml up --build
 ```
 
-Then open:
+Open [http://localhost:4173](http://localhost:4173).
 
-| Service  | URL                                                      |
-| -------- | -------------------------------------------------------- |
-| Frontend | [http://localhost:5173](http://localhost:5173)           |
-| API      | [http://localhost:8000/docs](http://localhost:8000/docs) |
-| MongoDB  | localhost:27017                                          |
+Make sure **`snapmap-frontend/.env`** has the right **`VITE_API_URL`** before `--build` (e.g. `http://localhost:8000` when the API is mapped to that port).
 
-Prod frontend runs on `http://localhost:4173`.
-
-Stop containers:
+Stop:
 
 ```bash
-docker compose -f docker-compose.dev.yml down
+docker compose down
 ```
 
-To wipe the database volume and start clean:
+Reset dev database volume:
 
 ```bash
-docker compose -f docker-compose.dev.yml down -v
+docker compose down -v
 ```
 
 ## Seed sample data
 
-Run the following script once to fill database with sample data.
+After dev Compose is up:
 
 ```bash
-docker compose -f docker-compose.dev.yml run --rm api python /app/src/app/utils/init/create_init_state.py
+docker compose run --rm api python /app/src/app/utils/init/create_init_state.py
 ```
 
 Logins to sample users:
@@ -121,7 +93,7 @@ Use this on a fresh database or after `docker compose down -v`.
 
 ## Repo layout
 
-- `docker-compose.dev.yml` — Frontend, Backend (API), and local Mongo
-- `docker-compose.prod.yml` — Frontend and Backend (Atlas Mongo via env)
+- `docker-compose.yml` — dev
+- `docker-compose.prod.yml` — prod
 - `snapmap-backend/` — Python API (submodule)
-- `snapmap-frontend/` — React Web App (submodule)
+- `snapmap-frontend/` — React web app (submodule)
